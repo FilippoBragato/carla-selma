@@ -357,8 +357,10 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
 
       // biker animation
       case static_cast<char>(CarlaRecorderPacketId::AnimBiker):
-        if (bFrameFound)
+        if (bFrameFound) {
           ProcessAnimBiker();
+          std::cout << "ProcessAnimBiker" << std::endl;
+        }
         else
           SkipPacket();
         break;
@@ -605,12 +607,14 @@ void CarlaReplayer::ProcessAnimBiker(void)
   std::stringstream Info;
 
   ReadValue<uint16_t>(File, Total);
+  std::cout << "Total: " << Total << std::endl;
   for (i = 0; i < Total; ++i)
   {
     Biker.Read(File);
     Biker.DatabaseId = MappedId[Biker.DatabaseId];
     if (!(IgnoreHero && IsHeroMap[Biker.DatabaseId]))
     {
+      std::cout << "Not ignored" << std::endl;
       Helper.ProcessReplayerAnimBiker(Biker);
     }
   }

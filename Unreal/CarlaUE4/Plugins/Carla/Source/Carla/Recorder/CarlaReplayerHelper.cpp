@@ -450,7 +450,9 @@ void CarlaReplayerHelper::ProcessReplayerAnimBiker(CarlaRecorderAnimBiker Biker)
     return;
   ACarlaWheeledVehicle* CarlaVehicle = Cast<ACarlaWheeledVehicle>(CarlaActor->GetActor());
   check(CarlaVehicle != nullptr)
+  std::cout << "SetSpeedAnim: " << Biker.ForwardSpeed << std::endl;
   CarlaVehicle->SetSpeedAnim(Biker.ForwardSpeed);
+  std::cout << "SetRotationAnim: " << Biker.EngineRotation << std::endl;
   CarlaVehicle->SetRotationAnim(Biker.EngineRotation);
 }
 

@@ -641,6 +641,7 @@ void ACarlaRecorder::AddAnimBiker(const CarlaRecorderAnimBiker &Biker)
 {
   if (Enabled)
   {
+    std::cout << "AddAnimBiker is enabled" << std::endl;
     Bikers.Add(Biker);
   }
 }
