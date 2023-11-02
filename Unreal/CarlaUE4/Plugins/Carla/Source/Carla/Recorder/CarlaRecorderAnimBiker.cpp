@@ -11,21 +11,15 @@
 void CarlaRecorderAnimBiker::Write(std::ostream &OutFile) const
 {
   WriteValue<uint32_t>(OutFile, DatabaseId);
-  std::cout << "Write DatabaseId: " << DatabaseId << std::endl;
   WriteValue<float>(OutFile, ForwardSpeed);
-  std::cout << "Write ForwardSpeed: " << ForwardSpeed << std::endl;
   WriteValue<float>(OutFile, EngineRotation);
-  std::cout << "Write EngineRotation: " << EngineRotation << std::endl;
 }
 
 void CarlaRecorderAnimBiker::Read(std::istream &InFile)
 {
   ReadValue<uint32_t>(InFile, DatabaseId);
-  std::cout << "Read DatabaseId: " << DatabaseId << std::endl;
   ReadValue<float>(InFile, ForwardSpeed);
-  std::cout << "Read ForwardSpeed: " << ForwardSpeed << std::endl;
   ReadValue<float>(InFile, EngineRotation);
-  std::cout << "Read EngineRotation: " << EngineRotation << std::endl;
 }
 
 // ---------------------------------------------

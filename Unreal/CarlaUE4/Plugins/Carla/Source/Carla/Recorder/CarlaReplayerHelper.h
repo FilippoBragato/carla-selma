@@ -9,10 +9,13 @@
 #include "CarlaRecorderEventAdd.h"
 #include "CarlaRecorderPosition.h"
 #include "CarlaRecorderState.h"
+#include "CarlaRecorderAnimBiker.h"
 #include "CarlaRecorderAnimWalker.h"
 #include "CarlaRecorderAnimVehicle.h"
+#include "CarlaRecorderAnimVehicleWheels.h"
 #include "CarlaRecorderLightVehicle.h"
 #include "CarlaRecorderLightScene.h"
+#include "CarlaRecorderWalkerBones.h"
 
 #include <unordered_map>
 
@@ -38,6 +41,7 @@ public:
       CarlaRecorderActorDescription Description,
       uint32_t DesiredId,
       bool bIgnoreHero,
+      bool bIgnoreSpectator,
       bool ReplaySensors);
 
   // replay event for removing actor
@@ -63,7 +67,7 @@ public:
 
   // set the animation for bikers
   void ProcessReplayerAnimBiker(CarlaRecorderAnimBiker Biker);
-  
+
   // set the vehicle light
   void ProcessReplayerLightVehicle(CarlaRecorderLightVehicle LightVehicle);
 

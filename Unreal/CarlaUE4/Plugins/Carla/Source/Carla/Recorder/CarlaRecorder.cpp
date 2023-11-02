@@ -17,6 +17,8 @@
 #include "Carla/Walker/WalkerControl.h"
 #include "Carla/Walker/WalkerController.h"
 #include "Components/BoxComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "VehicleAnimInstance.h"
 
 #include <compiler/disable-ue4-macros.h>
 #include "carla/rpc/VehicleLightState.h"
@@ -71,6 +73,11 @@ void ACarlaRecorder::SetReplayerTimeFactor(double TimeFactor)
 void ACarlaRecorder::SetReplayerIgnoreHero(bool IgnoreHero)
 {
   Replayer.SetIgnoreHero(IgnoreHero);
+}
+
+void ACarlaRecorder::SetReplayerIgnoreSpectator(bool IgnoreSpectator)
+{
+  Replayer.SetIgnoreSpectator(IgnoreSpectator);
 }
 
 void ACarlaRecorder::StopReplayer(bool KeepActors)
@@ -202,50 +209,42 @@ void ACarlaRecorder::AddVehicleWheelsAnimation(FCarlaActor *CarlaActor)
     return;
   if (CarlaActor->GetActorType() != FCarlaActor::ActorType::Vehicle)
     return;
+
   ACarlaWheeledVehicle* CarlaVehicle = Cast<ACarlaWheeledVehicle>(CarlaActor->GetActor());
-  check(CarlaVehicle != nullptr)
+  if (CarlaVehicle == nullptr)
+    return;
+
   USkeletalMeshComponent* SkeletalMesh = CarlaVehicle->GetMesh();
-  check(SkeletalMesh != nullptr)
+  if (SkeletalMesh == nullptr)
+    return;
+
   UVehicleAnimInstance* VehicleAnim = Cast<UVehicleAnimInstance>(SkeletalMesh->GetAnimInstance());
-  check(VehicleAnim != nullptr)
+  if (VehicleAnim == nullptr)
+    return;
+
   const UWheeledVehicleMovementComponent* WheeledVehicleMovementComponent = VehicleAnim->GetWheeledVehicleMovementComponent();
-  check(WheeledVehicleMovementComponent != nullptr)
+  if (WheeledVehicleMovementComponent == nullptr)
+    return;
 
   CarlaRecorderAnimWheels Record;
   Record.DatabaseId = CarlaActor->GetActorId();
+  Record.WheelValues.reserve(WheeledVehicleMovementComponent->Wheels.Num());
 
-  WheelInfo FL;
-  FL.Location = EVehicleWheelLocation::FL_Wheel;
-  FL.SteeringAngle = CarlaVehicle->GetWheelSteerAngle(FL.Location);
-  FL.TireRotation = WheeledVehicleMovementComponent->Wheels[(uint8)FL.Location]->GetRotationAngle();
-
-  WheelInfo FR;
-  FR.Location = EVehicleWheelLocation::FR_Wheel;
-  FR.SteeringAngle = CarlaVehicle->GetWheelSteerAngle(FR.Location);
-  FR.TireRotation = WheeledVehicleMovementComponent->Wheels[(uint8)FR.Location]->GetRotationAngle();
-
-  WheelInfo BL;
-  BL.Location = EVehicleWheelLocation::BL_Wheel;
-  BL.SteeringAngle = CarlaVehicle->GetWheelSteerAngle(BL.Location);
-  BL.TireRotation = WheeledVehicleMovementComponent->Wheels[(uint8)BL.Location]->GetRotationAngle();
-
-  WheelInfo BR;
-  BR.Location = EVehicleWheelLocation::BR_Wheel;
-  BR.SteeringAngle = CarlaVehicle->GetWheelSteerAngle(BR.Location);
-  BR.TireRotation = WheeledVehicleMovementComponent->Wheels[(uint8)BR.Location]->GetRotationAngle();
-
-  Record.WheelValues.reserve(4);
-  Record.WheelValues.push_back(FL);
-  Record.WheelValues.push_back(FR);
-  Record.WheelValues.push_back(BL);
-  Record.WheelValues.push_back(BR);
+  uint8 i = 0;
+  for (auto Wheel : WheeledVehicleMovementComponent->Wheels)
+  {
+    WheelInfo Info;
+    Info.Location = static_cast<EVehicleWheelLocation>(i);
+    Info.SteeringAngle = CarlaVehicle->GetWheelSteerAngle(Info.Location);
+    Info.TireRotation = Wheel->GetRotationAngle();
+    Record.WheelValues.push_back(Info);
+    ++i;
+  }
 
   AddAnimVehicleWheels(Record);
 
   if (CarlaVehicle->IsTwoWheeledVehicle())
   {
-
-
     AddAnimBiker(CarlaRecorderAnimBiker
     {
       CarlaActor->GetActorId(),
@@ -393,7 +392,7 @@ void ACarlaRecorder::AddActorBones(FCarlaActor *CarlaActor)
 
   CarlaRecorderWalkerBones Walker;
   Walker.DatabaseId = CarlaActor->GetActorId();
-  for (auto &Bone : Bones.BoneTransforms) 
+  for (auto &Bone : Bones.BoneTransforms)
   {
     FString Name = Bone.Get<0>();
     auto Transforms = Bone.Get<1>();
@@ -641,7 +640,6 @@ void ACarlaRecorder::AddAnimBiker(const CarlaRecorderAnimBiker &Biker)
 {
   if (Enabled)
   {
-    std::cout << "AddAnimBiker is enabled" << std::endl;
     Bikers.Add(Biker);
   }
 }

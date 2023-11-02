@@ -30,7 +30,8 @@ void CarlaReplayer::Stop(bool bKeepActors)
     Helper.ProcessReplayerFinish(bKeepActors, IgnoreHero, IsHeroMap);
   }
 
-  File.close();
+  if (File.is_open())
+    File.close();
 }
 
 bool CarlaReplayer::ReadHeader()
@@ -174,6 +175,12 @@ std::string CarlaReplayer::ReplayFile(std::string Filename, double TimeStart, do
 
   Info << "Replaying from " << TimeStart << " s - " << TimeToStop << " s (" << TotalTime << " s) at " <<
       std::setprecision(1) << std::fixed << TimeFactor << "x" << std::endl;
+
+  if (IgnoreHero)
+    Info << "Ignoring Hero vehicle" << std::endl;
+
+  if (IgnoreSpectator)
+    Info << "Ignoring Spectator camera" << std::endl;
 
   // set the follow Id
   FollowId = ThisFollowId;
@@ -357,10 +364,8 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
 
       // biker animation
       case static_cast<char>(CarlaRecorderPacketId::AnimBiker):
-        if (bFrameFound) {
+        if (bFrameFound)
           ProcessAnimBiker();
-          std::cout << "ProcessAnimBiker" << std::endl;
-        }
         else
           SkipPacket();
         break;
@@ -448,6 +453,7 @@ void CarlaReplayer::ProcessEventsAdd(void)
         EventAdd.Description,
         EventAdd.DatabaseId,
         IgnoreHero,
+        IgnoreSpectator,
         bReplaySensors);
 
     switch (Result.first)
@@ -468,10 +474,16 @@ void CarlaReplayer::ProcessEventsAdd(void)
         // mapping id (say desired Id is mapped to what)
         MappedId[EventAdd.DatabaseId] = Result.second;
         break;
+
+      // actor ignored (either Hero or Spectator)
+      case 3:
+        UE_LOG(LogCarla, Log, TEXT("ignoring actor from replayer (Hero or Spectator)"));
+        break;
+
     }
 
     // check to mark if actor is a hero vehicle or not
-    if (Result.first > 0)
+    if (Result.first > 0 && Result.first < 3)
     {
       // init
       IsHeroMap[Result.second] = false;
@@ -607,14 +619,12 @@ void CarlaReplayer::ProcessAnimBiker(void)
   std::stringstream Info;
 
   ReadValue<uint16_t>(File, Total);
-  std::cout << "Total: " << Total << std::endl;
   for (i = 0; i < Total; ++i)
   {
     Biker.Read(File);
     Biker.DatabaseId = MappedId[Biker.DatabaseId];
     if (!(IgnoreHero && IsHeroMap[Biker.DatabaseId]))
     {
-      std::cout << "Not ignored" << std::endl;
       Helper.ProcessReplayerAnimBiker(Biker);
     }
   }
@@ -731,8 +741,9 @@ void CarlaReplayer::UpdatePositions(double Per, double DeltaTime)
   // go through each actor and update
   for (auto &Pos : CurrPos)
   {
-    // check if ignore this actor
-    if (!(IgnoreHero && IsHeroMap[Pos.DatabaseId]))
+    // check if ignore this actor (hero) or the spectator (id == 1)
+    if (!(IgnoreHero && IsHeroMap[Pos.DatabaseId]) &&
+        !(IgnoreSpectator && Pos.DatabaseId == 1))
     {
       // check if exist a previous position
       auto Result = TempMap.find(Pos.DatabaseId);
