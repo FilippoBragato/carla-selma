@@ -492,8 +492,8 @@ void CarlaReplayerHelper::ProcessReplayerWalkerBones(const CarlaRecorderWalkerBo
   }
 
   // set the pose and blend
-  // Controller->SetBonesTransform(BonesIn);
-  // Controller->BlendPose(1.0f);
+  Controller->SetBonesTransform(BonesIn);
+  Controller->BlendPose(1.0f);
 }
 
 // replay finish

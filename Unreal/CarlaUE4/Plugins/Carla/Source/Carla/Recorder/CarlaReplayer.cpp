@@ -389,7 +389,7 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
       // walker bones
       case static_cast<char>(CarlaRecorderPacketId::WalkerBones):
         if (bFrameFound)
-          SkipPacket();
+          ProcessWalkerBones();
         else
           SkipPacket();
         break;
